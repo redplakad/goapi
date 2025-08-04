@@ -1,7 +1,7 @@
 package main
 
 import (
-	"net/http"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redplakad/goapi/handlers"
@@ -13,54 +13,53 @@ func main() {
 	// Load configuration
 	config := LoadConfig()
 
-	// Initialize database
+	// Connect to database
 	database := NewDatabase(config)
 	defer database.Close()
 
 	// Initialize repositories
-	nominatifKreditRepo := models.NewNominatifKreditRepository(database.DB)
+	nominatifRepo := models.NewNominatifKreditRepository(database.DB)
 
 	// Initialize handlers
-	nominatifKreditHandler := handlers.NewNominatifKreditHandler(nominatifKreditRepo)
+	nominatifHandler := handlers.NewNominatifKreditHandler(nominatifRepo)
+	apiKeyHandler := handlers.NewAPIKeyHandler()
 
-	// Initialize Gin router
+	// Setup Gin router
 	r := gin.Default()
 
 	// Add CORS middleware
 	r.Use(middleware.CORS())
 
-	// Health check endpoints
+	// Public routes (tidak perlu API key)
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
 
 	r.GET("/health", func(c *gin.Context) {
 		if err := database.DB.Ping(); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"status":  "error",
-				"message": "Database connection failed",
-				"error":   err.Error(),
-			})
+			c.JSON(500, gin.H{"status": "Database connection failed"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "ok",
-			"message": "Database connection successful",
-		})
+		c.JSON(200, gin.H{"status": "OK", "database": "Connected"})
 	})
 
-	// API routes
+	// Protected routes dengan API Key
 	api := r.Group("/api")
+	api.Use(middleware.APIKeyAuth()) // Semua route di grup ini perlu API key
 	{
-		// Nominatif Kredit routes
-		nominatifKredit := api.Group("/nominatif-kredit")
-		{
-			nominatifKredit.GET("", nominatifKreditHandler.GetAll)
-			nominatifKredit.GET("/:id", nominatifKreditHandler.GetByID)
-			nominatifKredit.GET("/rekening/:nomor_rekening", nominatifKreditHandler.GetByNomorRekening)
-		}
+		// API Key validation endpoint
+		api.GET("/validate", apiKeyHandler.ValidateAPIKey)
+		api.GET("/keys", apiKeyHandler.ListAPIKeys) // untuk admin
+
+		// Nominatif Kredit routes - semua perlu API key
+		api.GET("/nominatif-kredit", nominatifHandler.GetAll)
+		api.GET("/nominatif-kredit/:id", nominatifHandler.GetByID)
+		api.GET("/nominatif-kredit/rekening/:nomor_rekening", nominatifHandler.GetByNomorRekening)
 	}
 
 	// Start server
-	r.Run(":" + config.Port)
+	port := getEnv("PORT", "8080")
+	log.Printf("Server starting on port %s", port)
+	log.Printf("API Keys configured for authentication")
+	r.Run(":" + port)
 }

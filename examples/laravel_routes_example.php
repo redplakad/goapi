@@ -24,14 +24,17 @@ Usage examples in Laravel:
 
 1. API Endpoint:
    GET /api/v1/nominatif-kredit?page=1&per_page=20
+   GET /api/v1/nominatif-kredit?cab=007&ao=JAENUDIN&page=1&per_page=10
+   GET /api/v1/nominatif-kredit?ket_kd_prd=HONORER&tempat_bekerja=SDN
    GET /api/v1/nominatif-kredit/1
    GET /api/v1/nominatif-kredit/rekening/123456789
 
 2. Web Route:
    GET /nominatif-kredit (akan menampilkan view dengan data dari Go API)
 
-3. JavaScript/AJAX call:
+3. JavaScript/AJAX call with filters:
    
+   // Basic request
    fetch('/api/v1/nominatif-kredit?page=1&per_page=10')
    .then(response => response.json())
    .then(data => {
@@ -41,7 +44,43 @@ Usage examples in Laravel:
        }
    });
 
-4. Dalam Blade template:
+   // With filters
+   const filters = {
+       cab: '007',
+       ao: 'JAENUDIN',
+       ket_kd_prd: 'HONORER',
+       tempat_bekerja: 'SDN',
+       page: 1,
+       per_page: 20
+   };
+   
+   const queryString = new URLSearchParams(filters).toString();
+   fetch(`/api/v1/nominatif-kredit?${queryString}`)
+   .then(response => response.json())
+   .then(data => {
+       console.log('Filtered data:', data.data);
+   });
+
+4. Dalam Blade template dengan form filter:
+   
+   <form method="GET" action="{{ route('nominatif-kredit.index') }}">
+       <div class="row">
+           <div class="col-md-3">
+               <input type="text" name="cab" placeholder="CAB" value="{{ request('cab') }}" class="form-control">
+           </div>
+           <div class="col-md-3">
+               <input type="text" name="ao" placeholder="AO" value="{{ request('ao') }}" class="form-control">
+           </div>
+           <div class="col-md-3">
+               <input type="text" name="ket_kd_prd" placeholder="Product Description" value="{{ request('ket_kd_prd') }}" class="form-control">
+           </div>
+           <div class="col-md-3">
+               <input type="text" name="tempat_bekerja" placeholder="Workplace" value="{{ request('tempat_bekerja') }}" class="form-control">
+           </div>
+       </div>
+       <button type="submit" class="btn btn-primary mt-2">Filter</button>
+       <a href="{{ route('nominatif-kredit.index') }}" class="btn btn-secondary mt-2">Reset</a>
+   </form>
    
    @if($success)
        @foreach($kredits as $kredit)

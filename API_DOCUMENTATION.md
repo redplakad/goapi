@@ -7,7 +7,7 @@ http://localhost:8080/api
 
 ## Endpoints
 
-### 1. Get All Nominatif Kredit (with Pagination)
+### 1. Get All Nominatif Kredit (with Pagination and Filtering)
 ```
 GET /api/nominatif-kredit
 ```
@@ -15,10 +15,30 @@ GET /api/nominatif-kredit
 **Query Parameters:**
 - `page` (optional): Page number (default: 1)
 - `per_page` (optional): Items per page (default: 10, max: 100)
+- `cab` (optional): Filter by CAB (cabang/branch) - supports partial matching
+- `ao` (optional): Filter by AO (Account Officer) - supports partial matching
+- `ket_kd_prd` (optional): Filter by KET_KD_PRD (product description) - supports partial matching
+- `tempat_bekerja` (optional): Filter by TEMPAT_BEKERJA (workplace) - supports partial matching
 
-**Example Request:**
-```
+**Example Requests:**
+```bash
+# Basic request with pagination
 GET /api/nominatif-kredit?page=1&per_page=20
+
+# Filter by CAB (branch)
+GET /api/nominatif-kredit?cab=007
+
+# Filter by AO (Account Officer)
+GET /api/nominatif-kredit?ao=JAENUDIN
+
+# Filter by product description
+GET /api/nominatif-kredit?ket_kd_prd=HONORER
+
+# Filter by workplace
+GET /api/nominatif-kredit?tempat_bekerja=SDN
+
+# Multiple filters combined
+GET /api/nominatif-kredit?cab=007&ao=JAENUDIN&page=1&per_page=5
 ```
 
 **Response:**

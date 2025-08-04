@@ -47,8 +47,16 @@ func (h *NominatifKreditHandler) GetAll(c *gin.Context) {
 
 	offset := (page - 1) * perPage
 
-	// Get data
-	kredits, err := h.repo.GetAll(perPage, offset)
+	// Get filter parameters
+	filters := models.FilterParams{
+		CAB:            c.Query("cab"),
+		AO:             c.Query("ao"),
+		KET_KD_PRD:     c.Query("ket_kd_prd"),
+		TEMPAT_BEKERJA: c.Query("tempat_bekerja"),
+	}
+
+	// Get data with filters
+	kredits, err := h.repo.GetAllWithFilters(perPage, offset, filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, APIResponse{
 			Success: false,
@@ -57,8 +65,8 @@ func (h *NominatifKreditHandler) GetAll(c *gin.Context) {
 		return
 	}
 
-	// Get total count for pagination
-	total, err := h.repo.Count()
+	// Get total count for pagination with filters
+	total, err := h.repo.CountWithFilters(filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, APIResponse{
 			Success: false,

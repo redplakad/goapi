@@ -2,7 +2,16 @@ package models
 
 import (
 	"database/sql"
+	"strings"
 )
+
+// FilterParams represents filter parameters
+type FilterParams struct {
+	CAB            string `json:"cab"`
+	AO             string `json:"ao"`
+	KET_KD_PRD     string `json:"ket_kd_prd"`
+	TEMPAT_BEKERJA string `json:"tempat_bekerja"`
+}
 
 type NominatifKredit struct {
 	ID                   int             `json:"id" db:"id"`
@@ -286,5 +295,117 @@ func (r *NominatifKreditRepository) GetByNomorRekening(nomorRekening string) ([]
 func (r *NominatifKreditRepository) Count() (int, error) {
 	var count int
 	err := r.DB.QueryRow("SELECT COUNT(*) FROM nominatif_kredit").Scan(&count)
+	return count, err
+}
+
+// buildWhereClause builds WHERE clause for filters
+func (r *NominatifKreditRepository) buildWhereClause(filters FilterParams) (string, []interface{}) {
+	var conditions []string
+	var args []interface{}
+
+	if filters.CAB != "" {
+		conditions = append(conditions, "CAB = ?")
+		args = append(args, filters.CAB)
+	}
+
+	if filters.AO != "" {
+		conditions = append(conditions, "AO LIKE ?")
+		args = append(args, "%"+filters.AO+"%")
+	}
+
+	if filters.KET_KD_PRD != "" {
+		conditions = append(conditions, "KET_KD_PRD LIKE ?")
+		args = append(args, "%"+filters.KET_KD_PRD+"%")
+	}
+
+	if filters.TEMPAT_BEKERJA != "" {
+		conditions = append(conditions, "TEMPAT_BEKERJA LIKE ?")
+		args = append(args, "%"+filters.TEMPAT_BEKERJA+"%")
+	}
+
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = "WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	return whereClause, args
+}
+
+// GetAllWithFilters retrieves all nominatif_kredit records with filters and pagination
+func (r *NominatifKreditRepository) GetAllWithFilters(limit, offset int, filters FilterParams) ([]NominatifKredit, error) {
+	whereClause, whereArgs := r.buildWhereClause(filters)
+	
+	query := `
+		SELECT id, DATADATE, CAB, NOMOR_REKENING, NO_CIF, NAMA_NASABAH, ALAMAT, KODE_KOLEK,
+		       JML_HRI_PKK, JML_HARI_BGA, JML_HARI_TUNGGAKAN, KD_PRD, KET_KD_PRD, NOMOR_PERJANJIAN,
+		       NO_AKSEP, TGL_PK, TGL_AWAL_FAS, TGL_AKHIR_FAS, TGL_AWAL_AKSEP, TGL_AKH_AKSEP,
+		       PLAFOND_AWAL, BAKI_DEBET, LONGGAR_TARIK, BGA, TUNGGAKAN_POKOK, TUNGGAKAN_BUNGA,
+		       BGA_JTH_TEMPO, SMP_TGL_CADANG, NILAI_CADANG, ANGSURAN_TOTAL, TGL_PROSES_DENDA,
+		       AKUM_DENDA_PKK, AKUM_DENDA_BGA, PRD_AMORT, PRDK_AMORT, FLAG, TGL_AMORT,
+		       NILAI_BIAYA_PROVISI, AMORTISASI_PER_PRD, SISA_AMORT_PROV, TAGIH_BIAYA_PROV,
+		       NILAI_BIAYA_ADM, AMORT_ADM_PER_PRD, SISA_AMORT_ADM, BYA_ASURANSI, BYA_NOTARIS,
+		       PKK_JATEM, BGA_JATEM, REK_BYR_PKK_BGA, SLD_REK_DB, KD_INSTANSI, NM_INSTANSI,
+		       REK_BENDAHARA, SFT_KRD, GOL_KRD, JNS_KRD, SKTR_EKNM, ORNTS, NO_HP,
+		       POKOK_PINJAMAN, TITIPAN_EFEKTIF, JANGKA_WAKTU, REK_PENCAIRAN, NO_REKENING_LAMA,
+		       CIF_LAMA, KODE_GROUP, KET_GROUP, TGL_LAHIR, NIK, NIP, NILAI_BYA_TRANS,
+		       AMORT_TRANS_PER_PRD, SISA_AMORT_TRANS, AO, CAB_REK, KELURAHAN, KECAMATAN,
+		       CADANGAN_PPAP, TEMPAT_BEKERJA, TGL_AKHIR_BAYAR, PIHAK_TERKAIT, JENIS_JAMINAN,
+		       NILAI_LEGALITAS, RESTRUKTUR_KE, TGL_VALID_KOLEK, TGL_MACET
+		FROM nominatif_kredit ` + whereClause + `
+		ORDER BY id DESC 
+		LIMIT ? OFFSET ?`
+
+	// Combine filter args with pagination args
+	args := append(whereArgs, limit, offset)
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var kredits []NominatifKredit
+	for rows.Next() {
+		var kredit NominatifKredit
+		err := rows.Scan(
+			&kredit.ID, &kredit.DATADATE, &kredit.CAB, &kredit.NOMOR_REKENING, &kredit.NO_CIF,
+			&kredit.NAMA_NASABAH, &kredit.ALAMAT, &kredit.KODE_KOLEK, &kredit.JML_HRI_PKK,
+			&kredit.JML_HARI_BGA, &kredit.JML_HARI_TUNGGAKAN, &kredit.KD_PRD, &kredit.KET_KD_PRD,
+			&kredit.NOMOR_PERJANJIAN, &kredit.NO_AKSEP, &kredit.TGL_PK, &kredit.TGL_AWAL_FAS,
+			&kredit.TGL_AKHIR_FAS, &kredit.TGL_AWAL_AKSEP, &kredit.TGL_AKH_AKSEP, &kredit.PLAFOND_AWAL,
+			&kredit.BAKI_DEBET, &kredit.LONGGAR_TARIK, &kredit.BGA, &kredit.TUNGGAKAN_POKOK,
+			&kredit.TUNGGAKAN_BUNGA, &kredit.BGA_JTH_TEMPO, &kredit.SMP_TGL_CADANG, &kredit.NILAI_CADANG,
+			&kredit.ANGSURAN_TOTAL, &kredit.TGL_PROSES_DENDA, &kredit.AKUM_DENDA_PKK, &kredit.AKUM_DENDA_BGA,
+			&kredit.PRD_AMORT, &kredit.PRDK_AMORT, &kredit.FLAG, &kredit.TGL_AMORT, &kredit.NILAI_BIAYA_PROVISI,
+			&kredit.AMORTISASI_PER_PRD, &kredit.SISA_AMORT_PROV, &kredit.TAGIH_BIAYA_PROV, &kredit.NILAI_BIAYA_ADM,
+			&kredit.AMORT_ADM_PER_PRD, &kredit.SISA_AMORT_ADM, &kredit.BYA_ASURANSI, &kredit.BYA_NOTARIS,
+			&kredit.PKK_JATEM, &kredit.BGA_JATEM, &kredit.REK_BYR_PKK_BGA, &kredit.SLD_REK_DB,
+			&kredit.KD_INSTANSI, &kredit.NM_INSTANSI, &kredit.REK_BENDAHARA, &kredit.SFT_KRD,
+			&kredit.GOL_KRD, &kredit.JNS_KRD, &kredit.SKTR_EKNM, &kredit.ORNTS, &kredit.NO_HP,
+			&kredit.POKOK_PINJAMAN, &kredit.TITIPAN_EFEKTIF, &kredit.JANGKA_WAKTU, &kredit.REK_PENCAIRAN,
+			&kredit.NO_REKENING_LAMA, &kredit.CIF_LAMA, &kredit.KODE_GROUP, &kredit.KET_GROUP,
+			&kredit.TGL_LAHIR, &kredit.NIK, &kredit.NIP, &kredit.NILAI_BYA_TRANS, &kredit.AMORT_TRANS_PER_PRD,
+			&kredit.SISA_AMORT_TRANS, &kredit.AO, &kredit.CAB_REK, &kredit.KELURAHAN, &kredit.KECAMATAN,
+			&kredit.CADANGAN_PPAP, &kredit.TEMPAT_BEKERJA, &kredit.TGL_AKHIR_BAYAR, &kredit.PIHAK_TERKAIT,
+			&kredit.JENIS_JAMINAN, &kredit.NILAI_LEGALITAS, &kredit.RESTRUKTUR_KE, &kredit.TGL_VALID_KOLEK,
+			&kredit.TGL_MACET,
+		)
+		if err != nil {
+			return nil, err
+		}
+		kredits = append(kredits, kredit)
+	}
+
+	return kredits, nil
+}
+
+// CountWithFilters returns the total number of records with filters
+func (r *NominatifKreditRepository) CountWithFilters(filters FilterParams) (int, error) {
+	whereClause, args := r.buildWhereClause(filters)
+	
+	query := "SELECT COUNT(*) FROM nominatif_kredit " + whereClause
+	
+	var count int
+	err := r.DB.QueryRow(query, args...).Scan(&count)
 	return count, err
 }
