@@ -59,7 +59,7 @@ Pastikan MySQL server sudah berjalan dan database `monitoring` sudah dibuat.
    DB_HOST=localhost
    DB_PORT=3306
    DB_USER=root
-   DB_PASSWORD=garuda1*
+   DB_PASSWORD=secret
    DB_NAME=monitoring
    ```
 
