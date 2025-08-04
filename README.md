@@ -1,6 +1,24 @@
-# Go API with MySQL - Nominatif Kredit API
+# 🚀 Go API - Nominatif Kredit
 
-API backend untuk sistem monitoring kredit yang dibuat dengan Go (Gin framework) dan MySQL. API ini didesain untuk dikonsumsi oleh frontend Laravel.
+A secure, high-performance REST API built with Go and Gin framework for managing Nominatif Kredit data with advanced filtering capabilities and API Key authentication.
+
+## ✨ Features
+
+- 🔐 **API Key Authentication** - Secure access without complex login systems
+- 🔍 **Advanced Filtering** - Filter by CAB, AO, KET_KD_PRD, TEMPAT_BEKERJA
+- 📄 **Pagination Support** - Efficient handling of large datasets (38K+ records)  
+- 🌐 **CORS Enabled** - Ready for frontend integration
+- 🚀 **High Performance** - Optimized database queries
+- 📱 **Mobile Ready** - RESTful API design
+- 🔧 **Laravel Integration** - Built for Laravel frontend consumption
+
+## 🛠️ Tech Stack
+
+- **Go 1.22.2** - Core language
+- **Gin Framework** - HTTP web framework  
+- **MySQL** - Database
+- **godotenv** - Environment configuration
+- **CORS Middleware** - Cross-origin support
 
 ## Struktur Project
 

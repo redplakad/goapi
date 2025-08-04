@@ -2,8 +2,28 @@
 
 ## Base URL
 ```
-http://localhost:8080/api
+http://localhost:8081/api
 ```
+
+## 🔐 Authentication
+
+**IMPORTANT**: All API endpoints (except `/ping` and `/health`) require API Key authentication.
+
+### API Key Methods:
+1. **X-API-Key Header (Recommended)**:
+   ```
+   X-API-Key: api-key-laravel-frontend-2025
+   ```
+
+2. **Authorization Header**:
+   ```
+   Authorization: ApiKey api-key-laravel-frontend-2025
+   ```
+
+### Available API Keys:
+- `api-key-laravel-frontend-2025` - Laravel Frontend
+- `api-key-mobile-app-2025` - Mobile App  
+- `api-key-dashboard-admin-2025` - Admin Dashboard
 
 ## Endpoints
 
@@ -23,22 +43,32 @@ GET /api/nominatif-kredit
 **Example Requests:**
 ```bash
 # Basic request with pagination
-GET /api/nominatif-kredit?page=1&per_page=20
+curl -H "X-API-Key: api-key-laravel-frontend-2025" \
+     "http://localhost:8081/api/nominatif-kredit?page=1&per_page=20"
 
 # Filter by CAB (branch)
-GET /api/nominatif-kredit?cab=007
+curl -H "X-API-Key: api-key-laravel-frontend-2025" \
+     "http://localhost:8081/api/nominatif-kredit?cab=007"
 
 # Filter by AO (Account Officer)
-GET /api/nominatif-kredit?ao=JAENUDIN
+curl -H "X-API-Key: api-key-laravel-frontend-2025" \
+     "http://localhost:8081/api/nominatif-kredit?ao=JAENUDIN"
 
 # Filter by product description
-GET /api/nominatif-kredit?ket_kd_prd=HONORER
+curl -H "X-API-Key: api-key-laravel-frontend-2025" \
+     "http://localhost:8081/api/nominatif-kredit?ket_kd_prd=HONORER"
 
 # Filter by workplace
-GET /api/nominatif-kredit?tempat_bekerja=SDN
+curl -H "X-API-Key: api-key-laravel-frontend-2025" \
+     "http://localhost:8081/api/nominatif-kredit?tempat_bekerja=SDN"
 
 # Multiple filters combined
-GET /api/nominatif-kredit?cab=007&ao=JAENUDIN&page=1&per_page=5
+curl -H "X-API-Key: api-key-laravel-frontend-2025" \
+     "http://localhost:8081/api/nominatif-kredit?cab=007&ao=JAENUDIN&page=1&per_page=5"
+
+# Using Authorization header
+curl -H "Authorization: ApiKey api-key-laravel-frontend-2025" \
+     "http://localhost:8081/api/nominatif-kredit?page=1&per_page=10"
 ```
 
 **Response:**
